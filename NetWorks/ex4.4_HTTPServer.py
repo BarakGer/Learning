@@ -7,10 +7,13 @@ import io
 IP = '0.0.0.0'
 PORT = 80
 SOCKET_TIMEOUT = 0.2 * 60
-REQUEST_END = "\r\n\r\n" #we have only GET requests so there is no data part after headers
+HEADER_END = "\r\n\r\n"
+REQUEST_END = HEADER_END #we have only GET requests so there is no data part after headers
 RECV_BUFFER = 1024
 DEFAULT_URL = '\\index.html'
-HTTP_VERSION = 'HTTP/1.1 '
+HTTP_VERSION = 'HTTP/1.0 '
+REDIRECTION_DICTIONARY = {os.curdir + '\\webroot' + '\\js\\box.js': 'http://127.0.0.1/js2/box.js' }
+
 def get_file_data(filename):
     """ Get data from file """
     with open(filename, 'rb') as file:
@@ -23,29 +26,46 @@ def handle_client_request(resource, client_socket):
     """ Check the required resource, generate proper HTTP response and send to client"""
     # TO DO : add code that given a resource (URL and parameters) generates the proper response
     if resource == '\\':
-        url = os.curdir + '\\webroot' +  DEFAULT_URL
+        url = os.curdir + '\\webroot' + DEFAULT_URL
     else:
-        url = os.curdir + '\\webroot' +  resource
+        url = os.curdir + '\\webroot' + resource
 
-    # TO DO: check if URL had been redirected, not available or other error code. For example:
-    #if url in REDIRECTION_DICTIONARY:
-        # TO DO: send 302 redirection response
+    # TO DO: check if URL had been redirected, not available or other error code.
+    redirected = False
     if os.path.isfile(url):
         http_response = HTTP_VERSION + '200 ok\r\n'
-    else not(os.path.isfile(url)):
+        data = get_file_data(url)
+        http_header = 'Content-Length: ' + str(len(data))
+    elif url in REDIRECTION_DICTIONARY:
+        redirected = True
+        http_response = HTTP_VERSION + '302 Moved Temporarily\r\n'
+        http_header = 'Content-Type: text/html' '\r\nLocation: ' + REDIRECTION_DICTIONARY[url]\
+                     + '\r\nRetry-After: 0.1' + '\r\nstatus: 302' + HEADER_END  # TO DO: send 302 redirection response
+        data = ''
+    else:  # not(os.path.isfile(url)):
         http_response = HTTP_VERSION + '404 Not Found\r\n'
+        http_header = '\r\n'
+        data = ''
 
     # TO DO: extract requested file type from URL (html, jpg etc)
-    if filetype == 'html':
-        http_header = # TO DO: generate proper HTTP header
+    filetype = url[(url.rfind('.')+1):]
+    if redirected:
+        pass
+    elif filetype == 'html':
+        http_header += 'Content-Type: text/html\r\ncharset=utf-8' + HEADER_END  # TO DO: generate proper HTTP header
     elif filetype == 'jpg':
-        http_header = # TO DO: generate proper jpg header
+        http_header += 'Content-Type: image/jpeg' + HEADER_END # TO DO: generate proper jpg header
     # TO DO: handle all other headers
-
+    elif filetype == 'js':
+        http_header += 'Content-Type: text/javascript\r\ncharset=UTF-8' + HEADER_END
+    elif filetype == 'css':
+        http_header += 'Content-Type: text/css' + HEADER_END
+    else:
+        http_header += HEADER_END
     # TO DO: read the data from the file
-    data = get_file_data(filename)
-    http_response = http_response + http_header + data
-    client_socket.send(http_response)
+
+    full_http_response = http_response + http_header + data
+    client_socket.send(full_http_response)
 
 
 '''
