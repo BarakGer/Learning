@@ -13,7 +13,15 @@ RECV_BUFFER = 1024
 DEFAULT_URL = '\\index.html'
 HTTP_VERSION = 'HTTP/1.0 '
 REDIRECTION_DICTIONARY = {os.curdir + '\\webroot' + '\\js\\box.js': 'http://127.0.0.1/js2/box.js'}
-SPECIAL_DICTIONARY = {os.curdir + '\\webroot' + '\\calculate-next': 'next_num'}
+SPECIAL_DICTIONARY = {os.curdir + '\\webroot' + '\\calculate-next': 'next_num',
+                      os.curdir + '\\webroot' + '\\calculate-area': 'area'}
+
+def calaculate_area(parameters):
+    parameter_list = parameters.split('&')
+    param1 = float(parameter_list[0][parameter_list[0].find('=')+1:])
+    param2 = float(parameter_list[1][parameter_list[1].find('=')+1:])
+    return str(param1*param2/2)
+
 
 def get_next_num(parameter):
     num = int(parameter[parameter.find('=')+1:])
@@ -61,7 +69,11 @@ def handle_client_request(resource, client_socket):
         http_response = HTTP_VERSION + '200 ok\r\n'
         if SPECIAL_DICTIONARY[url] == 'next_num':
             data = get_next_num(parameters)
-            http_header = 'Content-Length: ' + str(len(str(data)))
+            http_header = 'Content-Length: ' + str(len(data))
+            http_header += '\r\nContent-Type: text/html\r\ncharset=utf-8' + HEADER_END
+        elif SPECIAL_DICTIONARY[url] == 'area':
+            data = calaculate_area(parameters)
+            http_header = 'Content-Length: ' + str(len(data))
             http_header += '\r\nContent-Type: text/html\r\ncharset=utf-8' + HEADER_END
     else:
         http_response = HTTP_VERSION + '404 Not Found\r\n'
