@@ -6,13 +6,19 @@ import io
 # TO DO: set constants
 IP = '0.0.0.0'
 PORT = 80
-SOCKET_TIMEOUT = 0.2 * 60
+SOCKET_TIMEOUT = 0.18 * 60
 HEADER_END = "\r\n\r\n"
 REQUEST_END = HEADER_END #we have only GET requests so there is no data part after headers
 RECV_BUFFER = 1024
 DEFAULT_URL = '\\index.html'
 HTTP_VERSION = 'HTTP/1.0 '
-REDIRECTION_DICTIONARY = {os.curdir + '\\webroot' + '\\js\\box.js': 'http://127.0.0.1/js2/box.js' }
+REDIRECTION_DICTIONARY = {os.curdir + '\\webroot' + '\\js\\box.js': 'http://127.0.0.1/js2/box.js'}
+SPECIAL_DICTIONARY = {os.curdir + '\\webroot' + '\\calculate-next': 'next_num'}
+
+def get_next_num(parameter):
+    num = int(parameter[parameter.find('=')+1:])
+    return str(num+1)
+
 
 def get_file_data(filename):
     """ Get data from file """
@@ -25,13 +31,21 @@ def get_file_data(filename):
 def handle_client_request(resource, client_socket):
     """ Check the required resource, generate proper HTTP response and send to client"""
     # TO DO : add code that given a resource (URL and parameters) generates the proper response
-    if resource == '\\':
+    splitted_resource = resource.split('?')
+    partial_url = splitted_resource[0]
+    try:
+        parameters = splitted_resource[1]
+    except:
+        print 'no parameters recieved'
+
+    if partial_url == '\\':
         url = os.curdir + '\\webroot' + DEFAULT_URL
     else:
-        url = os.curdir + '\\webroot' + resource
+        url = os.curdir + '\\webroot' + partial_url
 
     # TO DO: check if URL had been redirected, not available or other error code.
     redirected = False
+    special = False
     if os.path.isfile(url):
         http_response = HTTP_VERSION + '200 ok\r\n'
         data = get_file_data(url)
@@ -39,22 +53,29 @@ def handle_client_request(resource, client_socket):
     elif url in REDIRECTION_DICTIONARY:
         redirected = True
         http_response = HTTP_VERSION + '302 Moved Temporarily\r\n'
-        http_header = 'Content-Type: text/html' '\r\nLocation: ' + REDIRECTION_DICTIONARY[url]\
-                     + '\r\nRetry-After: 0.1' + '\r\nstatus: 302' + HEADER_END  # TO DO: send 302 redirection response
+        http_header = 'Content-Type: text/html' + '\r\nLocation: ' + REDIRECTION_DICTIONARY[url]\
+                      + '\r\nstatus: 302' + HEADER_END  # TO DO: send 302 redirection response
         data = ''
-    else:  # not(os.path.isfile(url)):
+    elif url in SPECIAL_DICTIONARY:
+        special = True
+        http_response = HTTP_VERSION + '200 ok\r\n'
+        if SPECIAL_DICTIONARY[url] == 'next_num':
+            data = get_next_num(parameters)
+            http_header = 'Content-Length: ' + str(len(str(data)))
+            http_header += '\r\nContent-Type: text/html\r\ncharset=utf-8' + HEADER_END
+    else:
         http_response = HTTP_VERSION + '404 Not Found\r\n'
         http_header = '\r\n'
         data = ''
 
     # TO DO: extract requested file type from URL (html, jpg etc)
     filetype = url[(url.rfind('.')+1):]
-    if redirected:
+    if redirected or special:
         pass
     elif filetype == 'html':
         http_header += 'Content-Type: text/html\r\ncharset=utf-8' + HEADER_END  # TO DO: generate proper HTTP header
     elif filetype == 'jpg':
-        http_header += 'Content-Type: image/jpeg' + HEADER_END # TO DO: generate proper jpg header
+        http_header += 'Content-Type: image/jpeg' + HEADER_END  # TO DO: generate proper jpg header
     # TO DO: handle all other headers
     elif filetype == 'js':
         http_header += 'Content-Type: text/javascript\r\ncharset=UTF-8' + HEADER_END
