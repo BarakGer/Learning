@@ -1,4 +1,5 @@
 # TO DO: import modules
+# SHLAIN: After you finish with TODO, clear it
 import socket
 import os
 import io
@@ -33,6 +34,7 @@ def get_file_data(filename):
     with open(filename, 'rb') as file:
         data = file.read()
         return data
+     # SHLAIN: What do you return if can't open ?
 
 
 
@@ -75,6 +77,7 @@ def handle_client_request(resource, client_socket):
             data = calaculate_area(parameters)
             http_header = 'Content-Length: ' + str(len(data))
             http_header += '\r\nContent-Type: text/html\r\ncharset=utf-8' + HEADER_END
+            # SHLAIN: last 2 lines should be outside this if statement
     else:
         http_response = HTTP_VERSION + '404 Not Found\r\n'
         http_header = '\r\n'
@@ -123,14 +126,15 @@ def validate_http_request(request_with_headers):
     resource = ''
     try:
         http_version = splitted_request[2]
-    except:
+    except: # SHLAIN: unnecessary
         valid_http =False
     if splitted_request.__len__() != 3:
         valid_http = False
     elif splitted_request[0] != 'GET':
-        valid_http = False
+        valid_http = False # SHLAIN: why do you have all those cases who are same ?
     elif not(http_version.startswith('HTTP/')) or not(http_version[http_version.find('/')+1].isdigit()) \
             or http_version[http_version.find('/')+2] != '.' or not(http_version[http_version.find('/')+3].isdigit()):
+        # SHLAIN: too complicated if-statement
         valid_http = False
     else:
         valid_http = True
