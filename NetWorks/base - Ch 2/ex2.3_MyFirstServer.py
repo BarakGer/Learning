@@ -13,7 +13,7 @@ def main():
     (client_socket, client_address) = server_socket.accept()
 
     client_name = client_socket.recv(1024)
-    client_socket.send('Hello ' + client_name)
+    client_socket.send(b'Hello ' + client_name)
 
     client_socket.close()
     server_socket.close()

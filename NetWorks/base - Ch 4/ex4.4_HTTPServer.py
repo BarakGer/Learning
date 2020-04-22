@@ -1,10 +1,7 @@
-# TO DO: import modules
-# SHLAIN: After you finish with TODO, clear it
 import socket
 import os
 import io
 
-# TO DO: set constants
 IP = '0.0.0.0'
 PORT = 80
 SOCKET_TIMEOUT = 0.18 * 60
@@ -175,16 +172,16 @@ def main():
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind((IP, PORT))
     server_socket.listen(10)
-    print "Listening for connections on port %d" % PORT
+    print("Listening for connections on port %d" % PORT)
 
     while True:
         client_socket, client_address = server_socket.accept()
-        print 'New connection received'
+        print('New connection received')
         client_socket.settimeout(SOCKET_TIMEOUT)
         try:
             handle_client(client_socket)
         except socket.timeout:
-            print 'socket timed out'
+            print('socket timed out')
 
 
 

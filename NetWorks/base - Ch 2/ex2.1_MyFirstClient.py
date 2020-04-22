@@ -7,9 +7,9 @@ def main():
     """
     my_socket = socket.socket()
     my_socket.connect(('127.0.0.1', 8820))
-    my_socket.send('Barak')
+    my_socket.send(b'Barak')
     reply = my_socket.recv(1024)
-    print('the server sent back: ' + reply)
+    print('the server sent back: ' + reply.decode('utf-8'))
     my_socket.close()
 
 
